@@ -1,6 +1,8 @@
 import { GoDotFill } from "react-icons/go";
+import { Link } from "react-router-dom";
 
 type ServiceRowProps = {
+  id: string;
   serviceId: string;
   serviceName: string;
   description: string;
@@ -9,6 +11,7 @@ type ServiceRowProps = {
   lastRow: boolean;
 };
 export const ServiceRow: React.FC<ServiceRowProps> = ({
+  id,
   serviceId,
   serviceName,
   description,
@@ -35,14 +38,20 @@ export const ServiceRow: React.FC<ServiceRowProps> = ({
           </div>
         </td>
         <td className="border-e border-orange100 px-4">
-          <a href="#" className="text-[#4277FF] underline">
+          <Link
+            to={`/home/service/detail/${id}`}
+            className="text-[#4277FF] underline"
+          >
             Chi tiết
-          </a>
+          </Link>
         </td>
         <td className={`${lastRow && "rounded-br-xl"} px-4`}>
-          <a href="#" className="text-[#4277FF] underline">
+          <Link
+            to={`/home/service/update/${id}`}
+            className="text-[#4277FF] underline"
+          >
             Cập nhật
-          </a>
+          </Link>
         </td>
       </tr>
     </>

@@ -11,6 +11,7 @@ import {
   getAccountById,
   updateAccount,
 } from "../../utils/AccountUtils";
+import { createLog } from "../../utils/UserLogUtils";
 
 export const UserCU = () => {
   const navigate = useNavigate();
@@ -40,6 +41,13 @@ export const UserCU = () => {
 
   const { id } = useParams<{ id?: string }>(); // Nhận tham số id tùy chọn
   const isUpdateMode = Boolean(id); // Xác định chế độ cập nhật hay tạo mới
+
+  useEffect(() => {
+    fetchRoleData();
+    if (isUpdateMode) {
+      fetchUserData();
+    }
+  }, []);
 
   const handleChangeUser = (field: keyof Accounts) => (value: any) => {
     setUser((prevUser) => {
@@ -169,13 +177,6 @@ export const UserCU = () => {
     return isValid;
   };
 
-  useEffect(() => {
-    fetchRoleData();
-    if (isUpdateMode) {
-      fetchUserData();
-    }
-  }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoad(true);
@@ -186,8 +187,10 @@ export const UserCU = () => {
       try {
         if (isUpdateMode) {
           await updateAccount(id!, user);
+          await createLog("Cập nhật thông tin tài khoản " + user.username);
         } else {
           await createAccount(user);
+          await createLog("Tạo thông tin tài khoản " + user.username);
         }
       } catch (error) {
         console.error("Error saving role:", error);

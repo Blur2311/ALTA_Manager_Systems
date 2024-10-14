@@ -42,9 +42,6 @@ export const UserInfo = () => {
     }
   }, []);
 
-  console.log(user);
-  console.log(auth?.currentUser?.photoURL);
-
   const handleChangeFile = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files && files.length > 0) {

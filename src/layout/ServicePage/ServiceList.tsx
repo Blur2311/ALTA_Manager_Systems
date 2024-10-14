@@ -16,10 +16,17 @@ import { ServiceRow } from "./components/ServiceRow";
 import { customPaginationitemRender } from "../../components/Pagination";
 import { useEffect, useState } from "react";
 import { Service } from "../../model/Service";
-import { formatTimestamp, getAllService } from "../../utils/ServiceUtils";
+import { getAllService } from "../../utils/ServiceUtils";
+import dayjs, { Dayjs } from "dayjs";
 
 export const ServiceList = () => {
   const [services, setServices] = useState<Service[]>([]);
+  const [search, setSearch] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState<string | null>("Tất cả");
+  const [startDate, setStartDate] = useState<Dayjs | null>(null);
+  const [endDate, setEndDate] = useState<Dayjs | null>(null);
+  const [currentPage, setCurrentPage] = useState(1); // Trang hiện tại
+  const [pageSize] = useState(9);
 
   useEffect(() => {
     const fetchServiceData = async () => {
@@ -32,14 +39,42 @@ export const ServiceList = () => {
 
   const handleChange = (value: string) => {
     console.log(`Selected: ${value}`);
+    setSelectedStatus(value);
   };
   const onChange: PaginationProps["onChange"] = (pageNumber) => {
     console.log("Page: ", pageNumber);
+    setCurrentPage(pageNumber);
   };
-  const onChangeDate: DatePickerProps["onChange"] = (date, dateString) => {
-    console.log("Selected date:", dateString);
-    console.log(date);
+  const onStartDateChange: DatePickerProps["onChange"] = (date, dateString) => {
+    setStartDate(date);
+    console.log("Selected start date:", dateString);
   };
+
+  const onEndDateChange: DatePickerProps["onChange"] = (date, dateString) => {
+    setEndDate(date);
+    console.log("Selected end date:", dateString);
+  };
+
+  const filteredServices = services.filter((ser) => {
+    const matchesSearch = ser.serviceName
+      .toLowerCase()
+      .includes(search.toLowerCase());
+
+    const matchesStatus =
+      selectedStatus === "Tất cả" || ser.status.toString() === selectedStatus;
+
+    // Lọc theo thời gian tạo
+    const matchesTimeCreate =
+      (!startDate || dayjs(ser.timeCreate.toDate()).isAfter(startDate)) &&
+      (!endDate || dayjs(ser.timeCreate.toDate()).isBefore(endDate));
+
+    return matchesSearch && matchesStatus && matchesTimeCreate;
+  });
+
+  const paginatedServices = filteredServices.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
 
   return (
     <>
@@ -71,7 +106,7 @@ export const ServiceList = () => {
                         ),
                       },
                       {
-                        value: "Hoạt động",
+                        value: "true",
                         label: (
                           <span className="font-nunito text-base text-gray5">
                             Hoạt động
@@ -79,7 +114,7 @@ export const ServiceList = () => {
                         ),
                       },
                       {
-                        value: "Ngưng hoạt động",
+                        value: "false",
                         label: (
                           <span className="font-nunito text-base text-gray5">
                             Ngưng hoạt động
@@ -97,8 +132,8 @@ export const ServiceList = () => {
                     <DatePicker
                       suffixIcon={
                         <LuCalendarDays className="text-xl text-orange500" />
-                      } // Icon màu cam
-                      onChange={onChangeDate}
+                      }
+                      onChange={onStartDateChange}
                       format="DD/MM/YYYY"
                       placeholder="From"
                       className="h-11 w-[150px] border-[1.5px] px-4 py-2 font-nunito text-base font-normal"
@@ -108,7 +143,7 @@ export const ServiceList = () => {
                       suffixIcon={
                         <LuCalendarDays className="text-xl text-orange500" />
                       }
-                      onChange={onChangeDate}
+                      onChange={onEndDateChange}
                       format="DD/MM/YYYY"
                       placeholder="To"
                       className="h-11 w-[150px] border-[1.5px] px-4 py-2 font-nunito text-base font-normal"
@@ -125,10 +160,8 @@ export const ServiceList = () => {
                   suffix={<FiSearch className="text-xl text-orange500" />}
                   className="mt-1 h-11 w-[300px] border-[1.5px] font-nunito"
                   placeholder="Nhập từ khóa"
-                  // status={`${error ? "error" : ""}`}
-                  // disabled={load}
-                  // value={username}
-                  // onChange={(e) => setUsername(e.target.value)}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
             </div>
@@ -153,21 +186,26 @@ export const ServiceList = () => {
                 </tr>
               </thead>
               <tbody className="text-sm font-normal text-textGray400">
-                <ServiceRow
-                  serviceId="KIO_01"
-                  serviceName="Kiosk"
-                  description="Mô tả dịch vụ 1"
-                  status={true}
-                  color="bg-white"
-                  lastRow={false}
-                />
+                {paginatedServices.map((data, index) => (
+                  <ServiceRow
+                    key={data.id}
+                    id={data.id}
+                    serviceId={data.serviceId}
+                    serviceName={data.serviceName}
+                    description={data.description}
+                    status={data.status}
+                    color={index % 2 !== 0 ? "bg-orange50" : "bg-white"}
+                    lastRow={index === paginatedServices.length - 1}
+                  />
+                ))}
               </tbody>
             </table>
             <div className="float-end mt-6">
               <Pagination
                 defaultCurrent={1}
-                total={500}
-                pageSize={10}
+                current={currentPage} // Trang hiện tại
+                total={filteredServices.length} // Tổng số tài khoản sau khi lọc
+                pageSize={pageSize}
                 onChange={onChange}
                 showSizeChanger={false}
                 itemRender={customPaginationitemRender}

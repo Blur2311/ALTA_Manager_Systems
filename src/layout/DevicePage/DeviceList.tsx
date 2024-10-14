@@ -1,50 +1,68 @@
-import {
-  DatePickerProps,
-  Input,
-  Pagination,
-  PaginationProps,
-  Select,
-} from "antd";
+import { Input, Pagination, PaginationProps, Select } from "antd";
 import { FiSearch } from "react-icons/fi";
-import { BiSolidLeftArrow, BiSolidRightArrow } from "react-icons/bi";
-
 import { PiPlusSquareFill } from "react-icons/pi";
 import { FaCaretDown } from "react-icons/fa6";
-import { RightSideButton } from "../../../components/RightSideButton";
-import { DeviceRow } from "./DeviceRow";
+import { DeviceRow } from "./components/DeviceRow";
+import { RightSideButton } from "../../components/RightSideButton";
+import { customPaginationitemRender } from "../../components/Pagination";
+import { useEffect, useState } from "react";
+import { Device } from "../../model/Device";
+import { getAllDevice } from "../../utils/DeviceUtils";
 
 export const DeviceList = () => {
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [search, setSearch] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState<string | null>("Tất cả");
+  const [selectedConnect, setSelectedConnect] = useState<string | null>(
+    "Tất cả",
+  );
+
+  const [currentPage, setCurrentPage] = useState(1); // Trang hiện tại
+  const [pageSize] = useState(9);
+
+  useEffect(() => {
+    const fetchDeviceData = async () => {
+      const data = await getAllDevice();
+      data && setDevices(data);
+    };
+
+    fetchDeviceData();
+  }, []);
+
   const handleChange = (value: string) => {
     console.log(`Selected: ${value}`);
+    setSelectedStatus(value);
   };
+  const handleChangeConnect = (value: string) => {
+    console.log(`Selected: ${value}`);
+    setSelectedConnect(value);
+  };
+
   const onChange: PaginationProps["onChange"] = (pageNumber) => {
     console.log("Page: ", pageNumber);
+    setCurrentPage(pageNumber);
   };
-  const onChangeDate: DatePickerProps["onChange"] = (date, dateString) => {
-    console.log("Selected date:", dateString);
-    console.log(date);
-  };
-  const itemRender = (
-    current: number,
-    type: "page" | "prev" | "next" | "jump-prev" | "jump-next",
-    originalElement: React.ReactNode,
-  ) => {
-    if (type === "prev") {
-      return (
-        <div className="flex h-full items-center justify-center rounded-md">
-          <BiSolidLeftArrow className="text-textGray200" />
-        </div>
-      );
-    }
-    if (type === "next") {
-      return (
-        <div className="flex h-full items-center justify-center rounded-md">
-          <BiSolidRightArrow className="text-textGray200" />
-        </div>
-      );
-    }
-    return originalElement;
-  };
+
+  const filteredDevices = devices.filter((device) => {
+    const matchesSearch = device.deviceName
+      .toLowerCase()
+      .includes(search.toLowerCase());
+
+    const matchesStatus =
+      selectedStatus === "Tất cả" ||
+      device.status.toString() === selectedStatus;
+
+    const matchesConnect =
+      selectedConnect === "Tất cả" ||
+      device.status.toString() === selectedConnect;
+
+    return matchesSearch && matchesStatus && matchesConnect;
+  });
+
+  const paginatedDevices = filteredDevices.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
 
   return (
     <>
@@ -78,7 +96,7 @@ export const DeviceList = () => {
                         ),
                       },
                       {
-                        value: "Hoạt động",
+                        value: "true",
                         label: (
                           <span className="font-nunito text-base text-gray5">
                             Hoạt động
@@ -86,7 +104,7 @@ export const DeviceList = () => {
                         ),
                       },
                       {
-                        value: "Ngưng hoạt động",
+                        value: "false",
                         label: (
                           <span className="font-nunito text-base text-gray5">
                             Ngưng hoạt động
@@ -103,7 +121,7 @@ export const DeviceList = () => {
                   <Select
                     defaultValue="Tất cả"
                     size="large"
-                    onChange={handleChange}
+                    onChange={handleChangeConnect}
                     suffixIcon={
                       <FaCaretDown className="text-2xl text-orange500" />
                     }
@@ -118,7 +136,7 @@ export const DeviceList = () => {
                         ),
                       },
                       {
-                        value: "Kết nối",
+                        value: "true",
                         label: (
                           <span className="font-nunito text-base text-gray5">
                             Kết nối
@@ -126,7 +144,7 @@ export const DeviceList = () => {
                         ),
                       },
                       {
-                        value: "Mất kết nối",
+                        value: "false",
                         label: (
                           <span className="font-nunito text-base text-gray5">
                             Mất kết nối
@@ -146,10 +164,8 @@ export const DeviceList = () => {
                   suffix={<FiSearch className="text-xl text-orange500" />}
                   className="mt-1 h-11 w-[300px] border-[1.5px] font-nunito"
                   placeholder="Nhập từ khóa"
-                  // status={`${error ? "error" : ""}`}
-                  // disabled={load}
-                  // value={username}
-                  // onChange={(e) => setUsername(e.target.value)}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
             </div>
@@ -180,119 +196,36 @@ export const DeviceList = () => {
                 </tr>
               </thead>
               <tbody className="text-sm font-normal text-textGray400">
-                <DeviceRow
-                  deviceId="KIO_01"
-                  deviceName="Kiosk"
-                  ipAddress="192.168.1.10"
-                  status={true}
-                  connectionStatus={false}
-                  usedServices="Khám tim mạch, Khám Sản - Phụ khoa, Khám răng hàm mặt,
-                  Khám tai mũi họng, Khám hô hấp, Khám tổng quát"
-                  color="bg-white"
-                  lastRow={false}
-                />
-                <DeviceRow
-                  deviceId="KIO_01"
-                  deviceName="Kiosk"
-                  ipAddress="192.168.1.10"
-                  status={true}
-                  connectionStatus={true}
-                  usedServices="Khám tim mạch, Khám Sản - Phụ khoa, Khám răng hàm mặt,
-                  Khám tai mũi họng, Khám hô hấp, Khám tổng quát"
-                  color="bg-orange50"
-                  lastRow={false}
-                />
-                <DeviceRow
-                  deviceId="KIO_01"
-                  deviceName="Kiosk"
-                  ipAddress="192.168.1.10"
-                  status={true}
-                  connectionStatus={true}
-                  usedServices="Khám tim mạch, Khám Sản - Phụ khoa, Khám răng hàm mặt,
-                  Khám tai mũi họng, Khám hô hấp, Khám tổng quát"
-                  color="bg-white"
-                  lastRow={false}
-                />
-                <DeviceRow
-                  deviceId="KIO_01"
-                  deviceName="Kiosk"
-                  ipAddress="192.168.1.10"
-                  status={false}
-                  connectionStatus={true}
-                  usedServices="Khám tim mạch, Khám Sản - Phụ khoa, Khám răng hàm mặt,
-                  Khám tai mũi họng, Khám hô hấp, Khám tổng quát"
-                  color="bg-orange50"
-                  lastRow={false}
-                />
-                <DeviceRow
-                  deviceId="KIO_01"
-                  deviceName="Kiosk"
-                  ipAddress="192.168.1.10"
-                  status={false}
-                  connectionStatus={false}
-                  usedServices="Khám tim mạch, Khám Sản - Phụ khoa, Khám răng hàm mặt,
-                  Khám tai mũi họng, Khám hô hấp, Khám tổng quát"
-                  color="bg-white"
-                  lastRow={false}
-                />
-                <DeviceRow
-                  deviceId="KIO_01"
-                  deviceName="Kiosk"
-                  ipAddress="192.168.1.10"
-                  status={true}
-                  connectionStatus={true}
-                  usedServices="Khám tim mạch, Khám Sản - Phụ khoa, Khám răng hàm mặt,
-                  Khám tai mũi họng, Khám hô hấp, Khám tổng quát"
-                  color="bg-orange50"
-                  lastRow={false}
-                />
-                <DeviceRow
-                  deviceId="KIO_01"
-                  deviceName="Kiosk"
-                  ipAddress="192.168.1.10"
-                  status={true}
-                  connectionStatus={false}
-                  usedServices="Khám tim mạch, Khám Sản - Phụ khoa, Khám răng hàm mặt,
-                  Khám tai mũi họng, Khám hô hấp, Khám tổng quát"
-                  color="bg-white"
-                  lastRow={false}
-                />
-                <DeviceRow
-                  deviceId="KIO_01"
-                  deviceName="Kiosk"
-                  ipAddress="192.168.1.10"
-                  status={true}
-                  connectionStatus={true}
-                  usedServices="Khám tim mạch, Khám Sản - Phụ khoa, Khám răng hàm mặt,
-                  Khám tai mũi họng, Khám hô hấp, Khám tổng quát"
-                  color="bg-orange50"
-                  lastRow={false}
-                />
-                <DeviceRow
-                  deviceId="KIO_01"
-                  deviceName="Kiosk"
-                  ipAddress="192.168.1.10"
-                  status={true}
-                  connectionStatus={false}
-                  usedServices="Khám tim mạch, Khám Sản - Phụ khoa, Khám răng hàm mặt,
-                  Khám tai mũi họng, Khám hô hấp, Khám tổng quát"
-                  color="bg-white"
-                  lastRow={true}
-                />
+                {paginatedDevices.map((data, index) => (
+                  <DeviceRow
+                    key={data.id}
+                    id={data.id}
+                    deviceId={data.deviceId}
+                    deviceName={data.deviceName}
+                    ipAddress={data.ipAddress}
+                    status={data.status}
+                    connectionStatus={data.connectionStatus}
+                    serviceUsed={data.serviceUsed}
+                    color={index % 2 !== 0 ? "bg-orange50" : "bg-white"}
+                    lastRow={index === paginatedDevices.length - 1}
+                  />
+                ))}
               </tbody>
             </table>
             <div className="float-end mt-6">
               <Pagination
                 defaultCurrent={1}
-                total={500}
-                pageSize={10}
+                current={currentPage} // Trang hiện tại
+                total={filteredDevices.length} // Tổng số tài khoản sau khi lọc
+                pageSize={pageSize}
                 onChange={onChange}
                 showSizeChanger={false}
-                itemRender={itemRender}
+                itemRender={customPaginationitemRender}
               />
             </div>
           </div>
           <RightSideButton
+            link="/home/device/add"
             Icon={PiPlusSquareFill}
             text={
               <span>

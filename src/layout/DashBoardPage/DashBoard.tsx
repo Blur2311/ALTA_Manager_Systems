@@ -8,8 +8,58 @@ import { ChartBoard } from "./components/ChartBoard";
 import { PiDesktop } from "react-icons/pi";
 import { MessageOutlined } from "@ant-design/icons";
 import { FiLayers } from "react-icons/fi";
+import { Device } from "../../model/Device";
+import { useEffect, useState } from "react";
+import { getAllDevice } from "../../utils/DeviceUtils";
+import { Service } from "../../model/Service";
+import { getAllService } from "../../utils/ServiceUtils";
+import { NumberManagement } from "../../model/Number";
+import { getAllNumber } from "../../utils/NumberUtils";
 
 export const DashBoard = () => {
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [numbers, setNumbers] = useState<NumberManagement[]>([]);
+
+  useEffect(() => {
+    const fetchDeviceData = async () => {
+      const data = await getAllDevice();
+      data && setDevices(data);
+    };
+    const fetchServiceData = async () => {
+      const data = await getAllService();
+      data && setServices(data);
+    };
+    const fetchNumberData = async () => {
+      const data = await getAllNumber();
+      data && setNumbers(data);
+    };
+
+    fetchNumberData();
+    fetchServiceData();
+    fetchDeviceData();
+  }, []);
+
+  const filterDeviceStatusTrue = devices.filter((data) => {
+    return data.status === true;
+  });
+
+  const filterServiceStatusTrue = services.filter((data) => {
+    return data.status === true;
+  });
+
+  const filterNumbStatusSuccess = numbers.filter((data) => {
+    return data.status === "Đã sử dụng";
+  });
+
+  const filterNumbStatusWait = numbers.filter((data) => {
+    return data.status === "Đang chờ";
+  });
+
+  const filterNumbStatusCancel = numbers.filter((data) => {
+    return data.status === "Bỏ qua";
+  });
+
   return (
     <>
       <div className="container w-full">
@@ -24,7 +74,7 @@ export const DashBoard = () => {
                   <CardDash
                     icon={<BsCalendar className="text-2xl text-[#6493F9]" />}
                     text="đã cấp"
-                    value={4.221}
+                    value={numbers.length}
                     status={true}
                     percent={32.41}
                     color="bg-[#6695FB]"
@@ -34,7 +84,7 @@ export const DashBoard = () => {
                       <BsCalendarCheck className="text-2xl text-[#35C75A]" />
                     }
                     text="đã sử dụng"
-                    value={3.721}
+                    value={filterNumbStatusSuccess.length}
                     status={false}
                     percent={32.41}
                     color="bg-[#35C75A]"
@@ -44,7 +94,7 @@ export const DashBoard = () => {
                       <RiContactsLine className="text-2xl text-orange300" />
                     }
                     text="đang chờ"
-                    value={468}
+                    value={filterNumbStatusWait.length}
                     status={true}
                     percent={56.41}
                     color="bg-[#ffac6a]"
@@ -54,7 +104,7 @@ export const DashBoard = () => {
                       <BsBookmarkStar className="text-2xl text-[#F86D6D]" />
                     }
                     text="đã bỏ qua"
-                    value={32}
+                    value={filterNumbStatusCancel.length}
                     status={false}
                     percent={22.41}
                     color="bg-[#F86D6D]"
@@ -74,33 +124,51 @@ export const DashBoard = () => {
                   color={"#FF7506"}
                   Icon={PiDesktop}
                   text="Thiết bị"
-                  total={4.221}
-                  active={3.799}
-                  inactive={422}
-                  fRing={90}
-                  sRing={10}
+                  total={devices.length}
+                  active={filterDeviceStatusTrue.length}
+                  inactive={devices.length - filterDeviceStatusTrue.length}
+                  fRing={Math.round(
+                    (filterDeviceStatusTrue.length / devices.length) * 100,
+                  )}
+                  sRing={Math.round(
+                    ((devices.length - filterDeviceStatusTrue.length) /
+                      devices.length) *
+                      100,
+                  )}
                 />
                 <ProgressBox
                   color={"#4277FF"}
                   Icon={MessageOutlined}
                   text="Dịch vụ"
-                  total={276}
-                  active={210}
-                  inactive={66}
-                  fRing={76}
-                  sRing={24}
+                  total={services.length}
+                  active={filterServiceStatusTrue.length}
+                  inactive={services.length - filterServiceStatusTrue.length}
+                  fRing={Math.round(
+                    (filterServiceStatusTrue.length / services.length) * 100,
+                  )}
+                  sRing={Math.round(
+                    ((services.length - filterServiceStatusTrue.length) /
+                      services.length) *
+                      100,
+                  )}
                 />
                 <ProgressBox
                   color={"#35C75A"}
                   Icon={FiLayers}
                   text="Cấp số"
-                  total={4.221}
-                  active={3.721}
-                  inactive={486}
-                  fRing={86}
-                  sRing={10}
-                  tRing={5}
-                  skip={32}
+                  total={numbers.length}
+                  active={filterNumbStatusSuccess.length}
+                  inactive={filterNumbStatusWait.length}
+                  skip={filterNumbStatusCancel.length}
+                  fRing={Math.round(
+                    (filterNumbStatusSuccess.length / numbers.length) * 100,
+                  )}
+                  sRing={Math.round(
+                    (filterNumbStatusWait.length / numbers.length) * 100,
+                  )}
+                  tRing={Math.round(
+                    (filterNumbStatusCancel.length / numbers.length) * 100,
+                  )}
                 />
               </div>
               <div className="shadow- mt-4 rounded-xl shadow-progressShadow">

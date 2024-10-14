@@ -1,6 +1,9 @@
+import firebase from "firebase/compat/app";
+import { formatTimestampUserLog } from "../../../utils/UserLogUtils";
+
 type UserHistoryRowProps = {
   username: string;
-  timestamp: string;
+  timestamp: firebase.firestore.Timestamp;
   ipAddress: string;
   action: string;
   color: string;
@@ -22,8 +25,10 @@ export const UserHistoryRow: React.FC<UserHistoryRowProps> = ({
         >
           {username}
         </td>
-        <td className="border-orange100 border-e px-4">{timestamp}</td>
-        <td className="border-orange100 border-e px-4">{ipAddress}</td>
+        <td className="border-e border-orange100 px-4">
+          {formatTimestampUserLog(timestamp)}
+        </td>
+        <td className="border-e border-orange100 px-4">{ipAddress}</td>
         <td className={`${lastRow && "rounded-br-xl"} px-4`}>{action}</td>
       </tr>
     </>

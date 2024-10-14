@@ -7,27 +7,210 @@ import {
 } from "antd";
 import { BiSolidRightArrow } from "react-icons/bi";
 import { LuCalendarDays } from "react-icons/lu";
-import { RightSideButton } from "../../components/RightSideButton";
 import { FaFileDownload } from "react-icons/fa";
 import { TbCaretUpDownFilled } from "react-icons/tb";
 import { ReportRow } from "./ReportRow";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { customPaginationitemRender } from "../../components/Pagination";
+import dayjs, { Dayjs } from "dayjs";
+import { NumberManagement } from "../../model/Number";
+import { getAllNumber } from "../../utils/NumberUtils";
+import { formatTimestamp, getAllService } from "../../utils/ServiceUtils";
+import { DownloadType, exportToExcel } from "../../utils/OtherUtils";
 
 export const Report = () => {
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
+
+  const [numbers, setNumbers] = useState<NumberManagement[]>([]);
+
+  const [options, setOptions] = useState<any[]>([]);
+  const [orderNumbersOptions, setOrderNumbersOptions] = useState<any[]>([]);
+  const [orderDayOptions, setOrderDayOptions] = useState<any[]>([]);
+
+  const [selectedStatus, setSelectedStatus] = useState<string | null>("Tất cả");
+  const [selectedSupply, setSelectedSupply] = useState<string | null>("Tất cả");
+  const [selectedOrder, setSelectedOrder] = useState<string | null>("Tất cả");
+  const [selectedDay, setSelectedDay] = useState<string | null>("Tất cả");
+  const [startDate, setStartDate] = useState<Dayjs | null>(null);
+  const [endDate, setEndDate] = useState<Dayjs | null>(null);
+
+  const [currentPage, setCurrentPage] = useState(1); // Trang hiện tại
+  const [pageSize] = useState(10);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const data = await getAllNumber();
+      data && setNumbers(data);
+      if (data) {
+        const uniqueOrders = new Set<string>();
+        const mappedOptions: { value: string; label: JSX.Element }[] = [
+          {
+            value: "Tất cả",
+            label: (
+              <span className="font-nunito text-base text-gray5">Tất cả</span>
+            ),
+          },
+          ...data.reduce(
+            (acc: { value: string; label: JSX.Element }[], number) => {
+              if (!uniqueOrders.has(number.order.toString())) {
+                uniqueOrders.add(number.order.toString());
+                acc.push({
+                  value: number.order.toString(),
+                  label: (
+                    <span className="font-nunito text-base text-gray5">
+                      {number.order}
+                    </span>
+                  ),
+                });
+              }
+              return acc;
+            },
+            [],
+          ),
+        ];
+        setOrderNumbersOptions(mappedOptions);
+
+        const uniqueDayOrders = new Set<string>();
+        const mappedDayOptions: { value: string; label: JSX.Element }[] = [
+          {
+            value: "Tất cả",
+            label: (
+              <span className="font-nunito text-base text-gray5">Tất cả</span>
+            ),
+          },
+          ...data.reduce(
+            (acc: { value: string; label: JSX.Element }[], number) => {
+              if (!uniqueDayOrders.has(formatTimestamp(number.provisionTime))) {
+                uniqueDayOrders.add(formatTimestamp(number.provisionTime));
+                acc.push({
+                  value: formatTimestamp(number.provisionTime),
+                  label: (
+                    <span className="font-nunito text-base text-gray5">
+                      {formatTimestamp(number.provisionTime)}
+                    </span>
+                  ),
+                });
+              }
+              return acc;
+            },
+            [],
+          ),
+        ];
+        setOrderDayOptions(mappedDayOptions);
+      }
+      console.log(data);
+    };
+
+    const fetchServiceData = async () => {
+      const fetchedService = await getAllService();
+      if (fetchedService) {
+        const mappedOptions = [
+          {
+            value: "Tất cả",
+            label: (
+              <span className="font-nunito text-base text-gray5">Tất cả</span>
+            ),
+          },
+          ...fetchedService.map((data) => ({
+            value: data.serviceName,
+            label: (
+              <span className="font-nunito text-base text-gray5">
+                {data.serviceName}
+              </span>
+            ),
+          })),
+        ];
+        setOptions(mappedOptions);
+      }
+    };
+
+    fetchServiceData();
+    fetchData();
+  }, []);
+
+  const handleChangeDay = (value: string) => {
+    setSelectedDay(value);
+  };
+  const handleChangeOrderNumber = (value: string) => {
+    setSelectedOrder(value);
+  };
+  const handleChangeStatus = (value: string) => {
+    console.log(`Selected: ${value}`);
+    setSelectedStatus(value);
+  };
+  const handleChangeSupply = (value: string) => {
+    console.log(`Selected: ${value}`);
+    setSelectedSupply(value);
+  };
   const handleChangeMul = (value: string[]) => {
     console.log(`Selected: ${value}`);
     setSelectedServices(value);
   };
-  const handleChange = (value: string) => {
-    console.log(`Selected: ${value}`);
-  };
   const onChange: PaginationProps["onChange"] = (pageNumber) => {
     console.log("Page: ", pageNumber);
+    setCurrentPage(pageNumber);
   };
-  const onChangeDate: DatePickerProps["onChange"] = (date, dateString) => {
-    console.log("Selected date:", dateString);
+  const onStartDateChange: DatePickerProps["onChange"] = (date, dateString) => {
+    setStartDate(date);
+    console.log("Selected start date:", dateString);
+  };
+  const onEndDateChange: DatePickerProps["onChange"] = (date, dateString) => {
+    setEndDate(date);
+    console.log("Selected end date:", dateString);
+  };
+
+  const filtered = numbers
+    .filter((data) => {
+      const matchesStatus =
+        selectedStatus === "Tất cả" || data.status === selectedStatus;
+
+      const matchesSupply =
+        selectedSupply === "Tất cả" || data.supplySource === selectedSupply;
+
+      const matchesOrder =
+        selectedOrder === "Tất cả" || data.order.toString() === selectedOrder;
+
+      const matchesDay =
+        selectedDay === "Tất cả" ||
+        formatTimestamp(data.provisionTime) === selectedDay;
+      const matchesService =
+        selectedServices.length === 0 ||
+        selectedServices.includes("Tất cả") || // Kiểm tra "Tất cả"
+        selectedServices.includes(data.serviceName);
+      // Lọc theo thời gian tạo
+      const matchesTimeCreate =
+        (!startDate || dayjs(data.provisionTime.toDate()).isAfter(startDate)) &&
+        (!endDate || dayjs(data.provisionTime.toDate()).isBefore(endDate));
+
+      return (
+        matchesStatus &&
+        matchesService &&
+        matchesSupply &&
+        matchesDay &&
+        matchesOrder &&
+        matchesTimeCreate
+      );
+    })
+    .sort(
+      (a, b) =>
+        b.provisionTime.toDate().getTime() - a.provisionTime.toDate().getTime(),
+    ); // Sắp xếp theo provisionTime từ mới nhất đến cũ nhất
+
+  const paginated = filtered.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
+
+  const downloadFile = async () => {
+    const downloadData: DownloadType[] = numbers.map((data) => ({
+      order: data.order,
+      serviceName: data.serviceName,
+      provisionTime: data.provisionTime,
+      status: data.status,
+      supplySource: data.supplySource,
+    }));
+    await exportToExcel(downloadData);
+    console.log(downloadData);
   };
 
   return (
@@ -45,7 +228,7 @@ export const Report = () => {
                     suffixIcon={
                       <LuCalendarDays className="text-xl text-orange500" />
                     } // Icon màu cam
-                    onChange={onChangeDate}
+                    onChange={onStartDateChange}
                     format="DD/MM/YYYY"
                     placeholder="10/10/2021"
                     className="h-11 w-[150px] border-[1.5px] px-4 py-2 font-nunito text-base font-normal"
@@ -55,7 +238,7 @@ export const Report = () => {
                     suffixIcon={
                       <LuCalendarDays className="text-xl text-orange500" />
                     }
-                    onChange={onChangeDate}
+                    onChange={onEndDateChange}
                     format="DD/MM/YYYY"
                     placeholder="18/10/2021"
                     className="h-11 w-[150px] border-[1.5px] px-4 py-2 font-nunito text-base font-normal"
@@ -77,37 +260,12 @@ export const Report = () => {
                         <span className="text-white">Số thứ tự</span>
                       }
                       size="large"
-                      onChange={handleChange}
+                      onChange={handleChangeOrderNumber}
                       suffixIcon={
                         <TbCaretUpDownFilled className="text-base text-white" />
                       }
                       className="custom-report-select h-full w-full font-nunito"
-                      options={[
-                        {
-                          value: "Tất cả",
-                          label: (
-                            <span className="font-nunito text-base text-gray5">
-                              Tất cả
-                            </span>
-                          ),
-                        },
-                        {
-                          value: "2040001",
-                          label: (
-                            <span className="font-nunito text-base text-gray5">
-                              2040001
-                            </span>
-                          ),
-                        },
-                        {
-                          value: "2040002",
-                          label: (
-                            <span className="font-nunito text-base text-gray5">
-                              2040002
-                            </span>
-                          ),
-                        },
-                      ]}
+                      options={orderNumbersOptions}
                     />
                   </th>
                   <th className="border-e border-white px-4">
@@ -119,45 +277,11 @@ export const Report = () => {
                       }
                       size="large"
                       onChange={handleChangeMul}
-                      value={selectedServices}
                       suffixIcon={
                         <TbCaretUpDownFilled className="text-base text-white" />
                       }
                       className="custom-report-select h-full w-full font-nunito"
-                      options={[
-                        {
-                          value: "Tất cả",
-                          label: (
-                            <span className="font-nunito text-base text-gray5">
-                              Tất cả
-                            </span>
-                          ),
-                        },
-                        {
-                          value: "Khám tim mạch",
-                          label: (
-                            <span className="font-nunito text-base text-gray5">
-                              Khám tim mạch
-                            </span>
-                          ),
-                        },
-                        {
-                          value: "Khám mắt",
-                          label: (
-                            <span className="font-nunito text-base text-gray5">
-                              Khám mắt
-                            </span>
-                          ),
-                        },
-                        {
-                          value: "Khám tổng quát",
-                          label: (
-                            <span className="font-nunito text-base text-gray5">
-                              Khám tổng quát
-                            </span>
-                          ),
-                        },
-                      ]}
+                      options={options}
                     />
                   </th>
                   <th className="border-e border-white px-4">
@@ -166,37 +290,12 @@ export const Report = () => {
                         <span className="text-white">Thời gian cấp</span>
                       }
                       size="large"
-                      onChange={handleChange}
+                      onChange={handleChangeDay}
                       suffixIcon={
                         <TbCaretUpDownFilled className="text-base text-white" />
                       }
                       className="custom-report-select h-full w-full font-nunito"
-                      options={[
-                        {
-                          value: "Tất cả",
-                          label: (
-                            <span className="font-nunito text-base text-gray5">
-                              Tất cả
-                            </span>
-                          ),
-                        },
-                        {
-                          value: "07:10  01/10/2021",
-                          label: (
-                            <span className="font-nunito text-base text-gray5">
-                              07:10 01/10/2021
-                            </span>
-                          ),
-                        },
-                        {
-                          value: "07:28  01/10/2021",
-                          label: (
-                            <span className="font-nunito text-base text-gray5">
-                              07:28 01/10/2021
-                            </span>
-                          ),
-                        },
-                      ]}
+                      options={orderDayOptions}
                     />
                   </th>
                   <th className="border-e border-white px-4">
@@ -205,7 +304,7 @@ export const Report = () => {
                         <span className="text-white">Tình trạng</span>
                       }
                       size="large"
-                      onChange={handleChange}
+                      onChange={handleChangeStatus}
                       suffixIcon={
                         <TbCaretUpDownFilled className="text-base text-white" />
                       }
@@ -252,7 +351,7 @@ export const Report = () => {
                         <span className="text-white">Nguồn cấp</span>
                       }
                       size="large"
-                      onChange={handleChange}
+                      onChange={handleChangeSupply}
                       suffixIcon={
                         <TbCaretUpDownFilled className="text-base text-white" />
                       }
@@ -288,114 +387,44 @@ export const Report = () => {
                 </tr>
               </thead>
               <tbody className="text-sm font-normal text-textGray400">
-                <ReportRow
-                  order={2010001}
-                  serviceName="Khám tim mạch"
-                  provisionTime="07:20 - 07/10/2021"
-                  status={true}
-                  supplySource="Kiosk"
-                  color="bg-white"
-                  lastRow={false}
-                />
-                <ReportRow
-                  order={2010001}
-                  serviceName="Khám tim mạch"
-                  provisionTime="07:20 - 07/10/2021"
-                  status={false}
-                  supplySource="Kiosk"
-                  color="bg-orange50"
-                  lastRow={false}
-                />
-                <ReportRow
-                  order={2010001}
-                  serviceName="Khám tim mạch"
-                  provisionTime="07:20 - 07/10/2021"
-                  status={null}
-                  supplySource="Kiosk"
-                  color="bg-white"
-                  lastRow={false}
-                />
-                <ReportRow
-                  order={2010001}
-                  serviceName="Khám tim mạch"
-                  provisionTime="07:20 - 07/10/2021"
-                  status={false}
-                  supplySource="Kiosk"
-                  color="bg-orange50"
-                  lastRow={false}
-                />
-                <ReportRow
-                  order={2010001}
-                  serviceName="Khám tim mạch"
-                  provisionTime="07:20 - 07/10/2021"
-                  status={null}
-                  supplySource="Kiosk"
-                  color="bg-white"
-                  lastRow={false}
-                />
-                <ReportRow
-                  order={2010001}
-                  serviceName="Khám tim mạch"
-                  provisionTime="07:20 - 07/10/2021"
-                  status={false}
-                  supplySource="Kiosk"
-                  color="bg-orange50"
-                  lastRow={false}
-                />
-                <ReportRow
-                  order={2010001}
-                  serviceName="Khám tim mạch"
-                  provisionTime="07:20 - 07/10/2021"
-                  status={true}
-                  supplySource="Kiosk"
-                  color="bg-white"
-                  lastRow={false}
-                />
-                <ReportRow
-                  order={2010001}
-                  serviceName="Khám tim mạch"
-                  provisionTime="07:20 - 07/10/2021"
-                  status={false}
-                  supplySource="Kiosk"
-                  color="bg-orange50"
-                  lastRow={false}
-                />
-                <ReportRow
-                  order={2010001}
-                  serviceName="Khám tim mạch"
-                  provisionTime="07:20 - 07/10/2021"
-                  status={true}
-                  supplySource="Kiosk"
-                  color="bg-white"
-                  lastRow={false}
-                />
-                <ReportRow
-                  order={2010001}
-                  serviceName="Khám tim mạch"
-                  provisionTime="07:20 - 07/10/2021"
-                  status={false}
-                  supplySource="Kiosk"
-                  color="bg-orange50"
-                  lastRow={true}
-                />
+                {paginated.map((data, index) => (
+                  <ReportRow
+                    key={data.id}
+                    order={data.order}
+                    serviceName={data.serviceName}
+                    provisionTime={data.provisionTime}
+                    status={data.status}
+                    supplySource={data.supplySource}
+                    color={index % 2 !== 0 ? "bg-orange50" : "bg-white"}
+                    lastRow={index === paginated.length - 1}
+                  />
+                ))}
               </tbody>
             </table>
             <div className="float-end mt-6">
               <Pagination
                 defaultCurrent={1}
-                total={500}
-                pageSize={10}
+                current={currentPage} // Trang hiện tại
+                total={filtered.length} // Tổng số tài khoản sau khi lọc
+                pageSize={pageSize}
                 onChange={onChange}
                 showSizeChanger={false}
                 itemRender={customPaginationitemRender}
               />
             </div>
           </div>
-          <RightSideButton
-            link=""
-            Icon={FaFileDownload}
-            text={<span>Tải về</span>}
-          />
+          <button
+            onClick={downloadFile}
+            type="button"
+            className="w-20 rounded-s-lg bg-orange50 px-1 py-3"
+          >
+            <div className="flex flex-col items-center gap-1">
+              <FaFileDownload className="text-[28px] text-orange500" />
+              <p className="text-center text-sm font-semibold text-orange500">
+                Tải về
+              </p>
+            </div>
+          </button>
         </div>
       </div>
     </>

@@ -16,7 +16,7 @@ export const UserList = () => {
   const [search, setSearch] = useState("");
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1); // Trang hiện tại
-  const [pageSize] = useState(10);
+  const [pageSize] = useState(9);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -137,7 +137,7 @@ export const UserList = () => {
                     role={acc.role}
                     status={acc.status}
                     color={index % 2 !== 0 ? "bg-orange50" : "bg-white"}
-                    lastRow={index === accounts.length - 1}
+                    lastRow={index === paginatedAccounts.length - 1}
                   />
                 ))}
               </tbody>

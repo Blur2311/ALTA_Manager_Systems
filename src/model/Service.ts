@@ -4,6 +4,7 @@ export interface Service {
   id: string;
   autoIncreFrom: number;
   autoIncreTo: number;
+  currentNumber: number;
   description: string;
   prefix: number;
   reset: boolean;

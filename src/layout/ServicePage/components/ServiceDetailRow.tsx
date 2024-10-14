@@ -2,7 +2,7 @@ import { GoDotFill } from "react-icons/go";
 
 type ServiceDetailRowProps = {
   orderNumber: number;
-  status: boolean | null;
+  status: string;
   color: string;
   lastRow: boolean;
 };
@@ -23,12 +23,12 @@ export const ServiceDetailRow: React.FC<ServiceDetailRowProps> = ({
         <td className={`${lastRow && "rounded-br-xl"} px-4`}>
           <div className="flex items-center gap-1">
             <GoDotFill
-              className={`text-[16px] ${status === null ? "text-dotGray" : status ? "text-dotGreen" : "text-dotBlue"}`}
+              className={`text-[16px] ${status === "Bỏ qua" ? "text-dotGray" : status === "Đã sử dụng" ? "text-dotGreen" : "text-dotBlue"}`}
             />
             <p>
-              {status === null
+              {status === "Bỏ qua"
                 ? "Vắng"
-                : status
+                : status === "Đã sử dụng"
                   ? "Đã hoàn thành"
                   : "Đang thực hiện"}
             </p>

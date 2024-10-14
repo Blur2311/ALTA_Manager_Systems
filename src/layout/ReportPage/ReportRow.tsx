@@ -1,20 +1,20 @@
+import { Timestamp } from "firebase/firestore";
 import { GoDotFill } from "react-icons/go";
+import { formatTimestamp } from "../../utils/ServiceUtils";
 
 type ReportRowProps = {
   order: number;
   serviceName: string;
-  provisionTime: string;
-  status: boolean | null;
+  provisionTime: Timestamp;
+  status: string;
   supplySource: string;
   color: string;
   lastRow: boolean;
 };
 export const ReportRow: React.FC<ReportRowProps> = ({
   order,
-
   serviceName,
   provisionTime,
-
   status,
   supplySource,
   color,
@@ -29,19 +29,15 @@ export const ReportRow: React.FC<ReportRowProps> = ({
           {order}
         </td>
         <td className="border-e border-orange100 px-4">{serviceName}</td>
-        <td className="border-e border-orange100 px-4">{provisionTime}</td>
+        <td className="border-e border-orange100 px-4">
+          {formatTimestamp(provisionTime)}
+        </td>
         <td className="border-e border-orange100 px-4">
           <div className="flex items-center gap-1">
             <GoDotFill
-              className={`text-[16px] ${status !== null ? (status ? "text-[#4277FF]" : "text-textGray300") : "text-dotRed"}`}
+              className={`text-[16px] ${status !== "Bỏ qua" ? (status === "Đang chờ" ? "text-[#4277FF]" : "text-textGray300") : "text-dotRed"}`}
             />
-            <p>
-              {status !== null
-                ? status
-                  ? "Đang chờ"
-                  : "Đã sử dụng"
-                : "Bỏ qua"}
-            </p>
+            <p>{status}</p>
           </div>
         </td>
         <td className={`${lastRow && "rounded-br-xl"} px-4`}>{supplySource}</td>

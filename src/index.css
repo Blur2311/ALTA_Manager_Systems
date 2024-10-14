@@ -103,7 +103,6 @@ body {
 }
 
 .custom-multiple-select .ant-select-selector {
-  border: 1.5px solid #d4d4d7 !important; /* Tùy chỉnh màu border */
   padding: 4px 12px !important; /* Tùy chỉnh padding */
 }
 .custom-multiple-select.border-changed .ant-select-selector {
@@ -126,6 +125,10 @@ body {
 .custom-modal .ant-modal-content {
   padding: 0 !important;
   border-radius: 24px;
+}
+.custom-modal-info .ant-modal-content {
+  padding: 0 !important;
+  border-radius: 16px;
 }
 .custom-report-select .ant-select-selector {
   border-width: 0 !important;

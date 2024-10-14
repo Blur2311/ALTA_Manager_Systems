@@ -2,12 +2,9 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Homepage } from "./layout/HomePage/Home";
 import { SignIn } from "./layout/SignInPage/SignIn";
 import { DashBoard } from "./layout/DashBoardPage/DashBoard";
-import { DeviceManage } from "./layout/DevicePage/DeviceManager";
 import { UserInfo } from "./layout/UserInfoPage/UserInfo";
 import PrivateRoute from "./components/PrivateRoute";
-import { auth } from "./config/firebase";
 import { UserHistory } from "./layout/UserHistoryPage/UserHistory";
-import { NumberManage } from "./layout/NumberManagePage/NumberMagage";
 import { Report } from "./layout/ReportPage/Report";
 import { RoleList } from "./layout/RolePage/RoleList";
 import { RoleCU } from "./layout/RolePage/RoleCU";
@@ -18,10 +15,14 @@ import { ResetPassword } from "./layout/ForgotPWPage/ResetPW";
 import { ServiceList } from "./layout/ServicePage/ServiceList";
 import { ServiceCU } from "./layout/ServicePage/ServiceCU";
 import { ServiceDetail } from "./layout/ServicePage/ServiceDetail";
+import { DeviceList } from "./layout/DevicePage/DeviceList";
+import { DeviceCU } from "./layout/DevicePage/DeviceCU";
+import { DeviceDetail } from "./layout/DevicePage/DeviceDetail";
+import { NumberList } from "./layout/NumberManagePage/NumberList";
+import { NumberCreate } from "./layout/NumberManagePage/NumberCreate";
+import { NumberDetail } from "./layout/NumberManagePage/NumberDetail";
 
 function App() {
-  console.log(auth?.currentUser?.email);
-
   return (
     <>
       <BrowserRouter>
@@ -42,7 +43,10 @@ function App() {
             <Route index element={<Navigate to="dashboard" />} />
 
             {/* Thiết bị */}
-            <Route path="device" element={<DeviceManage />} />
+            <Route path="device" element={<DeviceList />} />
+            <Route path="/home/device/add" element={<DeviceCU />} />
+            <Route path="/home/device/detail/:id" element={<DeviceDetail />} />
+            <Route path="/home/device/update/:id" element={<DeviceCU />} />
 
             {/* Dịch vụ */}
             <Route path="service" element={<ServiceList />} />
@@ -54,7 +58,9 @@ function App() {
             <Route path="/home/service/update/:id" element={<ServiceCU />} />
 
             {/* Cấp số */}
-            <Route path="number" element={<NumberManage />} />
+            <Route path="number" element={<NumberList />} />
+            <Route path="/home/number/add" element={<NumberCreate />} />
+            <Route path="/home/number/detail/:id" element={<NumberDetail />} />
 
             {/* Báo cáo */}
             <Route path="report" element={<Report />} />

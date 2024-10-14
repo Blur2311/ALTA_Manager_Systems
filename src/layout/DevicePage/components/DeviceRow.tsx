@@ -1,27 +1,35 @@
 import { Popover } from "antd";
 import { GoDotFill } from "react-icons/go";
+import { Link } from "react-router-dom";
 
 type DeviceRowProps = {
+  id: string;
   deviceId: string;
   deviceName: string;
   ipAddress: string;
   status: boolean;
   connectionStatus: boolean;
-  usedServices: string;
+  serviceUsed: string[];
   color: string;
   lastRow: boolean;
 };
 export const DeviceRow: React.FC<DeviceRowProps> = ({
+  id,
   deviceId,
   deviceName,
   ipAddress,
   status,
   connectionStatus,
-  usedServices,
+  serviceUsed,
   color,
   lastRow,
 }) => {
-  const showText = usedServices.slice(0, 25) + "...";
+  const formattedServices = serviceUsed.join(", ");
+  const showText =
+    formattedServices.length > 25
+      ? formattedServices.slice(0, 25) + "..."
+      : formattedServices;
+
   return (
     <>
       <tr className={`h-12 ${color}`}>
@@ -45,36 +53,44 @@ export const DeviceRow: React.FC<DeviceRowProps> = ({
             <GoDotFill
               className={`text-[16px] ${connectionStatus ? "text-dotGreen" : "text-dotRed"}`}
             />
-            <p>{status ? "Kết nối" : "Mất kết nối"}</p>
+            <p>{connectionStatus ? "Kết nối" : "Mất kết nối"}</p>
           </div>
         </td>
         <td className="border-e border-orange100 px-4">
           {showText}
           <br />
-          <Popover
-            content={usedServices}
-            arrow={false}
-            trigger="click"
-            className="cursor-pointer text-[#4277FF] underline"
-            overlayStyle={{
-              width: 400,
-              fontFamily: "Nunito",
-              border: "1px solid #FFC89B",
-              borderRadius: 8,
-            }}
-          >
-            Xem thêm
-          </Popover>
+          {formattedServices.length > 25 && (
+            <Popover
+              content={formattedServices}
+              arrow={false}
+              trigger="click"
+              className="cursor-pointer text-[#4277FF] underline"
+              overlayStyle={{
+                width: 400,
+                fontFamily: "Nunito",
+                border: "1px solid #FFC89B",
+                borderRadius: 8,
+              }}
+            >
+              Xem thêm
+            </Popover>
+          )}
         </td>
         <td className="border-e border-orange100 px-4">
-          <a href="#" className="text-[#4277FF] underline">
+          <Link
+            to={`/home/device/detail/${id}`}
+            className="text-[#4277FF] underline"
+          >
             Chi tiết
-          </a>
+          </Link>
         </td>
         <td className={`${lastRow && "rounded-br-xl"} px-4`}>
-          <a href="#" className="text-[#4277FF] underline">
+          <Link
+            to={`/home/device/update/${id}`}
+            className="text-[#4277FF] underline"
+          >
             Cập nhật
-          </a>
+          </Link>
         </td>
       </tr>
     </>

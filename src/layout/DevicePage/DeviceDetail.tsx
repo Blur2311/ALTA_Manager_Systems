@@ -1,7 +1,37 @@
 import { FaSquarePen } from "react-icons/fa6";
-import { RightSideButton } from "../../../components/RightSideButton";
+import { RightSideButton } from "../../components/RightSideButton";
+import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Device } from "../../model/Device";
+import { getDeviceById } from "../../utils/DeviceUtils";
 
 export const DeviceDetail = () => {
+  const [device, setDevice] = useState<Device>();
+
+  const { id } = useParams<{ id?: string }>();
+
+  useEffect(() => {
+    const fetchService = async () => {
+      if (id) {
+        const data = await getDeviceById(id);
+        data &&
+          setDevice({
+            id: id,
+            deviceId: data.deviceId,
+            connectionStatus: data.connectionStatus,
+            deviceName: data.deviceName,
+            deviceType: data.deviceType,
+            ipAddress: data.ipAddress,
+            password: data.password,
+            serviceUsed: data.serviceUsed,
+            status: data.status,
+            username: data.username,
+          });
+      }
+    };
+
+    fetchService();
+  }, []);
   return (
     <>
       <div className="ms-6 mt-4">
@@ -19,20 +49,24 @@ export const DeviceDetail = () => {
                       <p className="w-[160px] text-base font-semibold text-textGray500">
                         Mã thiết bị:
                       </p>
-                      <p className="font-normal text-textGray400">KIO_01</p>
+                      <p className="font-normal text-textGray400">
+                        {device?.deviceId}
+                      </p>
                     </div>
                     <div className="flex items-end">
                       <p className="w-[160px] text-base font-semibold text-textGray500">
                         Tên thiết bị:
                       </p>
-                      <p className="font-normal text-textGray400">Kiosk</p>
+                      <p className="font-normal text-textGray400">
+                        {device?.deviceName}
+                      </p>
                     </div>
                     <div className="flex items-end">
                       <p className="w-[160px] text-base font-semibold text-textGray500">
                         Địa chỉ IP:
                       </p>
                       <p className="font-normal text-textGray400">
-                        128.172.308
+                        {device?.ipAddress}
                       </p>
                     </div>
                   </div>
@@ -41,19 +75,25 @@ export const DeviceDetail = () => {
                       <p className="w-[160px] text-base font-semibold text-textGray500">
                         Loại thiết bị:
                       </p>
-                      <p className="font-normal text-textGray400">Kiosk</p>
+                      <p className="font-normal text-textGray400">
+                        {device?.deviceType}
+                      </p>
                     </div>
                     <div className="flex items-end">
                       <p className="w-[160px] text-base font-semibold text-textGray500">
                         Tên đăng nhập:
                       </p>
-                      <p className="font-normal text-textGray400">Linhkyo011</p>
+                      <p className="font-normal text-textGray400">
+                        {device?.username}
+                      </p>
                     </div>
                     <div className="flex items-end">
                       <p className="w-[160px] text-base font-semibold text-textGray500">
                         Mật khẩu:
                       </p>
-                      <p className="font-normal text-textGray400">CMS</p>
+                      <p className="font-normal text-textGray400">
+                        {device?.password}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -61,12 +101,12 @@ export const DeviceDetail = () => {
                   Dịch vụ sử dụng:
                 </p>
                 <p className="mt-2 font-normal text-textGray400">
-                  Khám tim mạch, Khám sản - Phụ khoa, Khám răng hàm mặt, Khám
-                  tai mũi họng, Khám hô hấp, Khám tổng quát.
+                  {device?.serviceUsed.join(", ")}
                 </p>
               </div>
             </div>
             <RightSideButton
+              link={`/home/device/update/${id}`}
               Icon={FaSquarePen}
               text={
                 <span>

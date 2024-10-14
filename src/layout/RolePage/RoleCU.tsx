@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { RoleCheckBox } from "./components/RoleCheckBox";
 import { createRole, getRole, updateRole } from "../../utils/RoleUtils";
+import { createLog } from "../../utils/UserLogUtils";
 
 export const RoleCU = () => {
   const [load, setLoad] = useState(false);
@@ -70,8 +71,10 @@ export const RoleCU = () => {
     try {
       if (isUpdateMode) {
         await updateRole(id!, roleData);
+        await createLog("Cập nhật thông tin vai trò " + roleData.roleName);
       } else {
         await createRole(roleData);
+        await createLog("Tạo thông tin vai trò " + roleData.roleName);
       }
     } catch (error) {
       console.error("Error saving role:", error);

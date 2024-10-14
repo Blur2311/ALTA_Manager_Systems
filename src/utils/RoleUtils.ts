@@ -13,6 +13,12 @@ import {
 import { db } from "../config/firebase";
 import { Role } from "../model/Role";
 
+//Create
+export const createRole = async (roleData: any) => {
+  await addDoc(collection(db, "Role"), roleData);
+};
+
+//Read
 export const getAllRole = async () => {
   const roleCollection = collection(db, "Role");
   const roleDoc = await getDocs(roleCollection);
@@ -35,13 +41,11 @@ export const getRole = async (id: string) => {
     return null;
   }
 };
+
+//Update
 export const updateRole = async (id: string, roleData: any) => {
   const roleRef = doc(db, "Role", id);
   await setDoc(roleRef, roleData);
-};
-
-export const createRole = async (roleData: any) => {
-  await addDoc(collection(db, "Role"), roleData);
 };
 
 export const updateRoleQuantity = async (roleName: string, value: number) => {
